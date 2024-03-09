@@ -1,5 +1,5 @@
 # PokemonBattleSimulatorAPI
-![Python 3.12](https://img.shields.io/badge/python-3.12-green.svg) 
+![Python 3.11](https://img.shields.io/badge/python-3.11-green.svg) 
 ![SAM](https://img.shields.io/badge/SAM-v1.110.0-blue.svg)
 ![Powertools for AWS Lambda](https://img.shields.io/badge/Powertools%20for%20AWS%20Lambda-v2.34.2-blue.svg)
 

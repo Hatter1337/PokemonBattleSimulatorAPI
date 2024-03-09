@@ -1,0 +1,236 @@
+openapi: 3.0.1
+info:
+  title: PokémonBattleSimulator API
+  version: 0.0.1
+
+servers:
+  - url: https://nlwyvfbdsj.execute-api.us-east-2.amazonaws.com/prod/api/v1
+    description: Prod API
+
+tags:
+  - name: Pokémon
+  - name: Battle
+
+paths:
+  /pokemon/{pokemon_id}:
+    get:
+      parameters:
+        - in: path
+          name: pokemon_id
+          schema:
+            type: string
+          required: true
+          description: Pokemon ID or Name
+      summary: Fetch Pokémon data
+      tags:
+        - Pokémon
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PokemonDataRes"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundRes"
+      security:
+        - api_key: []
+
+  /battle:
+    post:
+      summary: Generate battle
+      tags:
+        - Battle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BattleFightersReq"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResultRes"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidRequestParamsRes"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundRes"
+      security:
+        - api_key: []
+
+  /battle/{battle_id}:
+    get:
+      parameters:
+        - in: path
+          name: battle_id
+          schema:
+            type: string
+          required: true
+          description: Battle ID
+      summary: Fetch battle data
+      tags:
+        - Battle
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResultRes"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundRes"
+      security:
+        - api_key: []
+
+  /battle/search_by_winner/{name}:
+    get:
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+          description: Winner's Pokémon name
+        - in: query
+          name: opponent
+          schema:
+            type: string
+            description: Opponent's Pokémon name
+        - in: query
+          name: timestamp
+          schema:
+            type: number
+            description: timestamp after which to search for battles
+      summary: Search battles by winner name
+      tags:
+        - Battle
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleSearchRes"
+      security:
+        - api_key: []
+
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    # REQUEST OBJECTS
+    BattleFightersReq:
+      type: object
+      properties:
+        pokemon1:
+          type: string
+        pokemon2:
+          type: string
+
+    # RESPONSE OBJECTS - SUCCESS
+    PokemonDataRes:
+      type: object
+      properties:
+        pokemon_data:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            stats:
+              type: object
+              properties:
+                hp:
+                  type: number
+                attack:
+                  type: number
+                defense:
+                  type: number
+                special-attack:
+                  type: number
+                special-defense:
+                  type: number
+                speed:
+                  type: number
+            abilities:
+              type: array
+              items:
+                type: string
+            types:
+              type: array
+              items:
+                type: string
+            pokemon_image:
+              type: string
+              format: uri
+
+    BattleResultObj:
+      type: object
+      properties:
+        id:
+          type: string
+        winner:
+          type: string
+        opponent:
+          type: string
+        timestamp:
+          type: number
+        winner_total_stats:
+          type: number
+        opponent_total_stats:
+          type: number
+
+    BattleResultRes:
+      type: object
+      properties:
+        battle_result:
+          $ref: "#/components/schemas/BattleResultObj"
+
+    BattleSearchRes:
+      type: object
+      properties:
+        battles:
+          type: array
+          items:
+            $ref: "#/components/schemas/BattleResultObj"
+
+    # RESPONSE OBJECTS - ERRORS
+    ResourceNotFoundRes:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ResourceNotFound"
+
+    InvalidRequestParamsRes:
+      type: object
+      properties:
+        description:
+          type: object
+        error:
+          type: string
+          example: "InvalidRequestParams"

@@ -66,7 +66,8 @@ def generate_battle(fighters: Fighters):
         pokemon_data = fetch_pokemon_data_with_caching(
             cache_cli=cache_cli, poke_cli=poke_cli, pokemon_id=str(fighter)
         )
-        fighters_data[fighter] = pokemon_data
+        pokemon = pokemon_data["name"]
+        fighters_data[pokemon] = pokemon_data
 
     battle_result = PokemonBattleSimulator(fighters_data=fighters_data).result()
 
@@ -94,7 +95,7 @@ def fetch_battle_data(battle_id: str):
         return Response(
             status_code=200,
             content_type=content_types.APPLICATION_JSON,
-            body={"battle_data": battle_data.attribute_values},
+            body={"battle_result": battle_data.attribute_values},
         )
 
     except Exception as e:
@@ -102,32 +103,38 @@ def fetch_battle_data(battle_id: str):
         return Response(status_code=500)
 
 
-@app.get("/api/v1/battle/<winner>")
-def search_battles(winner: str):
+@app.get("/api/v1/battle/search_by_winner/<name>")
+def search_battles_by_winner(name: str):
     opponent_filter: str = app.current_event.get_query_string_value(name="opponent")
     timestamp_filter: str = app.current_event.get_query_string_value(name="timestamp")
 
     try:
         if opponent_filter:
-            # Filtering by 'opponent' using 'starts with'
+            # Filtering by 'opponent' name using 'starts with'
             battles = BattleModel.winner_opponent_index.query(
-                winner, BattleModel.opponent.startswith(opponent_filter)
+                name, BattleModel.opponent.startswith(opponent_filter)
             )
+
+            if timestamp_filter:
+                # Apply second level filtering by 'timestamp'
+                battles = [
+                    battle for battle in battles if battle.timestamp >= int(timestamp_filter)
+                ]
         elif timestamp_filter:
             # Filtering by 'timestamp' using 'greater than or equal to'
             battles = BattleModel.winner_timestamp_index.query(
-                winner, BattleModel.timestamp >= opponent_filter
+                name, BattleModel.timestamp >= int(timestamp_filter)
             )
         else:
-            # Querying only with the 'winner' value
-            battles = BattleModel.query(winner)
+            # Querying only with the 'winner' name
+            battles = BattleModel.winner_timestamp_index.query(name)
 
         battles_data = [battle.attribute_values for battle in battles]
 
         return Response(
             status_code=200,
             content_type=content_types.APPLICATION_JSON,
-            body={"battle_datas": battles_data},
+            body={"battles": battles_data},
         )
 
     except Exception as e:

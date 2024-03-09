@@ -1,0 +1,162 @@
+{
+	"info": {
+		"_postman_id": "396a6bf3-81d1-45a4-8ce8-a73c6891677d",
+		"name": "PokemonBattleSimulator",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21760466"
+	},
+	"item": [
+		{
+			"name": "/pokemon/{id}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{prod-api-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{prod-url}}/pokemon/squirtle",
+					"host": [
+						"{{prod-url}}"
+					],
+					"path": [
+						"pokemon",
+						"squirtle"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/battle",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{prod-api-key}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"pokemon1\": \"pikachu\",\n    \"pokemon2\": 7\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{prod-url}}/battle",
+					"host": [
+						"{{prod-url}}"
+					],
+					"path": [
+						"battle"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/battle/{id}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{prod-api-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{prod-url}}/battle/4dba3bfc21c44bf18173d5b487cf08d0",
+					"host": [
+						"{{prod-url}}"
+					],
+					"path": [
+						"battle",
+						"4dba3bfc21c44bf18173d5b487cf08d0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/battle/search_by_winner/{name}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{prod-api-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{prod-url}}/battle/search_by_winner/squirtle?timestamp=1709982900&opponent=pik",
+					"host": [
+						"{{prod-url}}"
+					],
+					"path": [
+						"battle",
+						"search_by_winner",
+						"squirtle"
+					],
+					"query": [
+						{
+							"key": "timestamp",
+							"value": "1709982900"
+						},
+						{
+							"key": "opponent",
+							"value": "pik"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "prod-url",
+			"value": "https://nlwyvfbdsj.execute-api.us-east-2.amazonaws.com/prod/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "prod-api-key",
+			"value": "HFcpRIEb4Y9sYKnUEzCNVRmrOTrUIEy7YMYC2pU3",
+			"type": "string"
+		}
+	]
+}

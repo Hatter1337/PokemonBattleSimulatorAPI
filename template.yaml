@@ -26,7 +26,7 @@ Globals:
   Api:
     OpenApiVersion: 3.0.1
   Function:
-    Runtime: python3.12
+    Runtime: python3.11
     MemorySize: 128
     Timeout: 15
     Architectures:
@@ -44,10 +44,10 @@ Resources:
       Description: "Lambda Layer with Powertools developer toolkit"
       ContentUri: layers/powertools_layer/
       CompatibleRuntimes:
-        - python3.12
+        - python3.11
       RetentionPolicy: Retain
     Metadata:
-      BuildMethod: python3.12
+      BuildMethod: python3.11
 
   DataLayer:
     Type: AWS::Serverless::LayerVersion
@@ -56,10 +56,10 @@ Resources:
       Description: "Lambda Layer provides utils for data processing & caching solution"
       ContentUri: layers/data_layer/
       CompatibleRuntimes:
-        - python3.12
+        - python3.11
       RetentionPolicy: Retain
     Metadata:
-      BuildMethod: python3.12
+      BuildMethod: python3.11
 
   # --------------------------------------------------------------------- Service APIs (ApiGateway)
   ApiGatewayAccount:
@@ -150,6 +150,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/pokemon"
                   - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/battle"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/battle/index/*"
 
   # --------------------------------------------------------------------- Lambda functions
   PokemonDataFunction:
@@ -212,11 +213,11 @@ Resources:
             Method: GET
             Auth:
               ApiKeyRequired: true
-        SearchBattleData:
+        SearchBattlesByWinner:
           Type: Api
           Properties:
             RestApiId: !Ref PokemonBattleSimulatorApi
-            Path: /api/v1/battle/{winner}
+            Path: /api/v1/battle/search_by_winner/{name}
             Method: GET
             Auth:
               ApiKeyRequired: true

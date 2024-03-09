@@ -16,7 +16,7 @@ parameter_overrides = [
 stack_name = "pokemon-battle-similator-dev"
 region = "us-east-2"
 s3_bucket = "pokemon-battle-similator-sam-deploy"
-capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
     "ENVIRONMENT=dev",
 ]
@@ -28,7 +28,7 @@ parameter_overrides = [
 stack_name = "pokemon-battle-similator-prod"
 region = "us-east-2"
 s3_bucket = "pokemon-battle-similator-sam-deploy"
-capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
     "ENVIRONMENT=prod",
 ]

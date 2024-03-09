@@ -1,6 +1,6 @@
 from cache.dynamodb import DynamoDBCacheClient
 
-# from cache.redis import RedisCacheClient
+from cache.redis import RedisCacheClient
 from resource_ext.exceptions import ResourceNotFoundError
 
 
@@ -23,10 +23,9 @@ def get_cache_client(db_type):
     if db_type == "dynamodb":
         return DynamoDBCacheClient(table_name="pokemon")
     elif db_type == "redis":
-        raise NotImplemented(f"Cache client not implemented for {db_type}")
-        # return RedisCacheClient(
-        #     startup_nodes=[{"host": "{RedisHost}", "port": "6379"}], password="{RedisPassword}"
-        # )
+        return RedisCacheClient(
+            startup_nodes=[{"host": "{RedisHost}", "port": "6379"}], password="{RedisPassword}"
+        )
     else:
         raise NotImplemented(f"Cache client not implemented for {db_type}")
 

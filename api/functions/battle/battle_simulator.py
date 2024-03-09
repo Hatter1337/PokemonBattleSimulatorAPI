@@ -27,6 +27,7 @@ class PokemonBattleSimulator:
         """
         if len(fighters_data) != 2:
             raise PokemonBattleSimulatorException("Exactly two fighters are required.")
+
         self.fighters_data = fighters_data
 
     def result(self):
@@ -46,16 +47,16 @@ class PokemonBattleSimulator:
         # Determine if randomness applies (the weakest has >= 80% of the stats of the stronger)
         if total_stats[pre_opponent_id] >= total_stats[pre_winner_id] * 0.8:
             # The weakest has a chance to win
-            winner_id = random.choice([pre_winner_id, pre_opponent_id])
-            opponent_id = pre_winner_id if pre_winner_id != winner_id else pre_opponent_id
+            winner = random.choice([pre_winner_id, pre_opponent_id])
+            opponent = pre_winner_id if pre_winner_id != winner else pre_opponent_id
         else:
-            winner_id, opponent_id = pre_winner_id, pre_opponent_id
+            winner, opponent = pre_winner_id, pre_opponent_id
 
         return {
             "id": uuid4().hex,
-            "winner": str(winner_id),
-            "opponent": str(opponent_id),
+            "winner": winner,
+            "opponent": opponent,
             "timestamp": int(time.time()),
-            "winner_total_stats": total_stats[winner_id],
-            "opponent_total_stats": total_stats[opponent_id],
+            "winner_total_stats": total_stats[winner],
+            "opponent_total_stats": total_stats[opponent],
         }
