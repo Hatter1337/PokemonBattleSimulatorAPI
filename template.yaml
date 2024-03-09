@@ -158,7 +158,7 @@ Resources:
     Properties:
       FunctionName: !Sub "pokemon-battle-simulator-pokemon-data-fn-${ENVIRONMENT}"
       CodeUri: api/functions/pokemon/
-      Handler: app.lambda_handler
+      Handler: fetch_data.lambda_handler
       Role: !GetAtt BaseLambdaExecutionRole.Arn
       Layers:
         - !Ref PowertoolsLayer
