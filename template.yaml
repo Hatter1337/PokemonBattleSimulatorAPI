@@ -1,0 +1,234 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for Pokemon Battle Simulator
+
+Conditions:
+  IsProductionEnv: !Equals [!Ref ENVIRONMENT, "prod"]
+
+Mappings:
+  EnvironmentSettings:
+    prod:
+      LogRetentionInDays: 30 # ~1 month
+    dev:
+      LogRetentionInDays: 7 # 1 week
+
+Parameters:
+  ENVIRONMENT:
+    Description: Deploying environment
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+
+Globals:
+  Api:
+    OpenApiVersion: 3.0.1
+  Function:
+    Runtime: python3.12
+    MemorySize: 128
+    Timeout: 15
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref ENVIRONMENT
+
+Resources:
+  # --------------------------------------------------------------------- Lambda Layers
+  PowertoolsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: powertools-lambda-layer
+      Description: "Lambda Layer with Powertools developer toolkit"
+      ContentUri: layers/powertools_layer/
+      CompatibleRuntimes:
+        - python3.12
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.12
+
+  DataLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: data-lambda-layer
+      Description: "Lambda Layer provides utils for data processing & caching solution"
+      ContentUri: layers/data_layer/
+      CompatibleRuntimes:
+        - python3.12
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.12
+
+  # --------------------------------------------------------------------- Service APIs (ApiGateway)
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayLoggingRole.Arn
+
+  ApiGatewayLoggingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  PokemonBattleSimulatorApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "Pokemon-Battle-Simulator-API-${ENVIRONMENT}"
+      StageName: !Ref ENVIRONMENT
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'http://localhost:3000, g1dibjqc06.execute-api.eu-west-2.amazonaws.com'"
+        AllowCredentials: true
+      BinaryMediaTypes:
+        - "image/*"
+      CacheClusterEnabled: !If [IsProductionEnv, true, false]
+      CacheClusterSize: "1.6"
+      MethodSettings:
+        - ResourcePath: /api/v1/
+          HttpMethod: GET
+          CachingEnabled: true
+          CacheTtlInSeconds: 300
+          LoggingLevel: INFO
+          MetricsEnabled: true
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName:
+            !Join ["", [{ "Ref": "AWS::StackName" }, "-usage-plan"]]
+          Quota:
+            Limit: 25000
+            Period: WEEK
+
+  PokemonBattleSimulatorApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${PokemonBattleSimulatorApi}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref ENVIRONMENT, LogRetentionInDays]
+
+  # --------------------------------------------------------------------- Lambda Role(s)
+  BaseLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "base-lambda-execution-role-${ENVIRONMENT}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaS3DynamoDBCloudWatchPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # CloudWatch Logs
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              # DynamoDB tables for Pokemon Battle Simulator
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/pokemon"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/battle"
+
+  # --------------------------------------------------------------------- Lambda functions
+  PokemonDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "pokemon-battle-simulator-pokemon-data-fn-${ENVIRONMENT}"
+      CodeUri: api/functions/pokemon/
+      Handler: app.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Layers:
+        - !Ref PowertoolsLayer
+        - !Ref DataLayer
+      # AutoPublishAlias: live
+      # ProvisionedConcurrencyConfig:
+      #   ProvisionedConcurrentExecutions: !If [IsProductionEnv, 3, 1]
+      Events:
+        FetchPokemonData:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /api/v1/pokemon/{pokemon_id}
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+
+  PokemonDataFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/pokemon-battle-simulator-pokemon-data-fn-${ENVIRONMENT}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref ENVIRONMENT, LogRetentionInDays]
+
+  BattleDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "pokemon-battle-simulator-battle-data-fn-${ENVIRONMENT}"
+      CodeUri: api/functions/battle/
+      Handler: app.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Layers:
+        - !Ref PowertoolsLayer
+        - !Ref DataLayer
+      # AutoPublishAlias: live
+      # ProvisionedConcurrencyConfig:
+      #   ProvisionedConcurrentExecutions: !If [IsProductionEnv, 3, 1]
+      Events:
+        GenerateBattle:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /api/v1/battle
+            Method: POST
+            Auth:
+              ApiKeyRequired: true
+        FetchBattleData:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /api/v1/battle/{battle_id}
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        SearchBattleData:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /api/v1/battle/{winner}
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+
+  BattleDataFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/pokemon-battle-simulator-battle-data-fn-${ENVIRONMENT}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref ENVIRONMENT, LogRetentionInDays]
+
+Outputs:
+  PokemonBattleSimulatorApiUrlOutput:
+    Description: "URL of the Pokemon Battle Simulator API"
+    Value: !Sub "https://${PokemonBattleSimulatorApi}.execute-api.${AWS::Region}.amazonaws.com/${ENVIRONMENT}/api/v1/"

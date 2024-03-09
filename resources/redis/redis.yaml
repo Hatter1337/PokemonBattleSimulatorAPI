@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Deploy Custom Redis on EC2 with Network infrastructure
+
+Parameters:
+  RedisPassword:
+    Description: Password for Redis
+    Type: String
+
+Resources:
+  PokemonBattleVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: PokemonBattleVPC
+
+  PokemonBattleSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref PokemonBattleVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PokemonBattleSubnet
+
+  PokemonBattleInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: Name
+          Value: PokemonBattleInternetGateway
+
+  GatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref PokemonBattleVPC
+      InternetGatewayId: !Ref PokemonBattleInternetGateway
+
+  PokemonBattleRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref PokemonBattleVPC
+
+  PokemonBattleRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PokemonBattleRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref PokemonBattleInternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PokemonBattleSubnet
+      RouteTableId: !Ref PokemonBattleRouteTable
+
+  RedisSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Allow access to Redis
+      VpcId: !Ref PokemonBattleVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 # Consider limiting this to your IP for security
+
+  EC2InstanceRedisRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "ECRAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetAuthorizationToken"
+                Resource: "*"
+
+  EC2InstanceRedisProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref EC2InstanceRedisRole
+
+  RedisEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref EC2InstanceRedisProfile
+      ImageId: ami-0da9b6167383dde73
+      SubnetId: !Ref PokemonBattleSubnet
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          amazon-linux-extras install docker -y
+          service docker start
+          usermod -a -G docker ec2-user
+
+          # Login to Amazon ECR
+          $(aws ecr get-login --no-include-email --region ${AWS::Region})
+
+          # Pull the Redis image from ECR
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/pokemon-battle-similator-redis:latest
+
+          # Run Redis container with the password provided through an environment variable
+          docker run --name redis -p 6379:6379 -d \
+            -e REDIS_PASSWORD='${RedisPassword}' \
+            ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/pokemon-battle-similator-redis:latest \
+            redis-server --requirepass '${RedisPassword}'
+
+  RedisEC2EIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      InstanceId: !Ref RedisEC2Instance
+
+Outputs:
+  RedisInstancePublicIP:
+    Description: Public IP of the Redis Instance
+    Value: !GetAtt RedisEC2EIP.PublicIp
