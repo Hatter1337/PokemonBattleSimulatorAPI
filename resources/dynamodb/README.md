@@ -1,4 +1,4 @@
-Deploy DynamoDB tables using CloudFormation:
+## Deploy DynamoDB tables using CloudFormation:
 ```
 aws cloudformation deploy \
   --stack-name pokemon-battle-similator-dynamodb-dev \
