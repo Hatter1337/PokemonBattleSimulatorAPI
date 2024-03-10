@@ -88,19 +88,7 @@ Resources:
       Cors:
         AllowMethods: "'*'"
         AllowHeaders: "'*'"
-        AllowOrigin: "'http://localhost:3000, g1dibjqc06.execute-api.eu-west-2.amazonaws.com'"
-        AllowCredentials: true
-      BinaryMediaTypes:
-        - "image/*"
-      CacheClusterEnabled: !If [IsProductionEnv, true, false]
-      CacheClusterSize: "1.6"
-      MethodSettings:
-        - ResourcePath: /api/v1/
-          HttpMethod: GET
-          CachingEnabled: true
-          CacheTtlInSeconds: 300
-          LoggingLevel: INFO
-          MetricsEnabled: true
+        AllowOrigin: "'*'"
       Auth:
         ApiKeyRequired: true
         UsagePlan:
