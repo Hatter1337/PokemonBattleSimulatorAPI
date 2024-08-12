@@ -1,10 +1,7 @@
 # PokemonBattleSimulatorAPI
-![Python 3.11](https://img.shields.io/badge/python-3.11-green.svg) 
-![SAM](https://img.shields.io/badge/SAM-v1.110.0-blue.svg)
-![Powertools for AWS Lambda](https://img.shields.io/badge/Powertools%20for%20AWS%20Lambda-v2.34.2-blue.svg)
-
-[//]: # (![Code quality]&#40;https://github.com/Hatter1337/PokemonBattleSimulatorAPI/actions/workflows/ci.yml/badge.svg&#41;)
-
+![Python 3.12](https://img.shields.io/badge/python-3.12-green.svg) 
+![SAM](https://img.shields.io/badge/SAM-v1.120.0-blue.svg)
+![Powertools for AWS Lambda](https://img.shields.io/badge/Powertools%20for%20AWS%20Lambda-v2.43.0-blue.svg)
 
 REST API written in Python, powered by **[AWS SAM](https://aws.amazon.com/serverless/sam/)** and **[Powertools for AWS Lambda](https://docs.powertools.aws.dev/lambda/python/latest/)**.
 

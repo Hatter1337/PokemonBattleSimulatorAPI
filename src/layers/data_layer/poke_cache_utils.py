@@ -1,7 +1,7 @@
-from cache.dynamodb import DynamoDBCacheClient
+from aws_lambda_powertools.event_handler.exceptions import NotFoundError
 
 from cache.redis import RedisCacheClient
-from resource_ext.exceptions import ResourceNotFoundError
+from cache.dynamodb import DynamoDBCacheClient
 
 
 def get_cache_client(db_type):
@@ -21,11 +21,9 @@ def get_cache_client(db_type):
 
     """
     if db_type == "dynamodb":
-        return DynamoDBCacheClient(table_name="pokemon")
+        return DynamoDBCacheClient(table_name="ede-demo-pokemon")
     elif db_type == "redis":
-        return RedisCacheClient(
-            startup_nodes=[{"host": "{RedisHost}", "port": "6379"}], password="{RedisPassword}"
-        )
+        return RedisCacheClient(startup_nodes=[{"host": "{RedisHost}", "port": "6379"}], password="{RedisPassword}")
     else:
         raise NotImplemented(f"Cache client not implemented for {db_type}")
 
@@ -55,6 +53,6 @@ def fetch_pokemon_data_with_caching(cache_cli, poke_cli, pokemon_id):
         if pokemon_data:
             cache_cli.set(key=pokemon_id, value=pokemon_data, ttl=3600)  # Cache with TTL
         else:
-            raise ResourceNotFoundError(f"Pokemon data not found for ID: {pokemon_id}")
+            raise NotFoundError(f"Pokemon data not found for ID: {pokemon_id}")
 
     return pokemon_data

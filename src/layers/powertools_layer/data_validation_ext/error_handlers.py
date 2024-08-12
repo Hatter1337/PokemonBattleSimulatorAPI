@@ -10,7 +10,6 @@ class ExceptionHandlers:
     Attributes:
         app (LambdaPowertoolsApp): An instance of the LambdaPowertoolsApp.
         logger (Logger): An instance of the Powertools Logger.
-
     """
 
     def __init__(self, app, logger):
@@ -27,7 +26,6 @@ class ExceptionHandlers:
 
         Returns:
             Response: A custom response with a status code of 400, indicating a bad request.
-
         """
         error_description = validation_error_description(exc)
         self.logger.error(
@@ -55,7 +53,6 @@ class ExceptionHandlers:
         Returns:
             Response: A custom response with a status code of 404,
                 indicating that the resource was not found.
-
         """
         return Response(
             status_code=404,

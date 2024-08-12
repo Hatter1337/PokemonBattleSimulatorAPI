@@ -4,31 +4,31 @@ version = 0.1
 #   - $ sam build
 #   - $ sam local start-api
 [default.local_start_api.parameters]
-region = "us-east-2"
+region = "eu-central-1"
 parameter_overrides = [
-    "ENVIRONMENT=dev",
+    "Env=dev",
 ]
 
 # Deploy to Development environment:
 #   - $ sam build
 #   - $ sam deploy --config-env dev
 [dev.deploy.parameters]
-stack_name = "pokemon-battle-similator-dev"
-region = "us-east-2"
+stack_name = "ede-demo-pokemon-api-dev"
+region = "eu-central-1"
 s3_bucket = "pokemon-battle-similator-sam-deploy"
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
-    "ENVIRONMENT=dev",
+    "Env=dev",
 ]
 
 # Deploy to Production environment:
 #   - $ sam build
 #   - $ sam deploy --config-env prod
 [prod.deploy.parameters]
-stack_name = "pokemon-battle-similator-prod"
-region = "us-east-2"
+stack_name = "ede-demo-pokemon-api-prod"
+region = "eu-central-1"
 s3_bucket = "pokemon-battle-similator-sam-deploy"
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
-    "ENVIRONMENT=prod",
+    "Env=prod",
 ]

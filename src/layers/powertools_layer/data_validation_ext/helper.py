@@ -12,7 +12,6 @@ def validation_error_description(exc: RequestValidationError):
 
     Returns:
         dict: A dictionary containing detailed descriptions of each validation error.
-
     """
     error_description = {}
 

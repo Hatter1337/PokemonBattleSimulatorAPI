@@ -14,7 +14,6 @@ class PokemonBattleSimulator:
     Attributes:
         fighters_data (dict): A dictionary with pokemon ID/name as keys
             and their battle data as values.
-
     """
 
     def __init__(self, fighters_data):
@@ -23,7 +22,6 @@ class PokemonBattleSimulator:
 
         Args:
             fighters_data (dict): A dictionary containing the data of the two pokemons.
-
         """
         if len(fighters_data) != 2:
             raise PokemonBattleSimulatorException("Exactly two fighters are required.")
@@ -36,7 +34,6 @@ class PokemonBattleSimulator:
 
         Returns:
             dict: Battle result, including winner, opponent, and their stats.
-
         """
         total_stats = {
             pokemon_id: sum(fighter["stats"].values())

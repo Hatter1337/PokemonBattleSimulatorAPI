@@ -1,10 +1,10 @@
 from aws_lambda_powertools import Logger
+from aws_lambda_powertools.event_handler.exceptions import NotFoundError
 from aws_lambda_powertools.event_handler.openapi.exceptions import RequestValidationError
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver, Response, content_types
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from data_validation_ext import ExceptionHandlers
-from resource_ext.exceptions import ResourceNotFoundError
 from poke_api.client import PokeAPIClient
 from poke_cache_utils import get_cache_client, fetch_pokemon_data_with_caching
 
@@ -25,17 +25,15 @@ def handle_invalid_params_wrapper(exc: RequestValidationError):
     return exception_handlers.invalid_params(exc)
 
 
-@app.exception_handler(ResourceNotFoundError)
+@app.exception_handler(NotFoundError)
 def handle_not_found_error(exc):
     return exception_handlers.not_found(exc)
 
 
 # --------------------------------------------------------------- API Resources
-@app.get("/api/v1/pokemon/<pokemon_id>")
-def fetch_pokemon_data(pokemon_id: str | int):
-    pokemon_data = fetch_pokemon_data_with_caching(
-        cache_cli=cache_cli, poke_cli=poke_cli, pokemon_id=str(pokemon_id)
-    )
+@app.get("/v1/pokemon/<pokemon_id>")
+def fetch_pokemon_data(pokemon_id):
+    pokemon_data = fetch_pokemon_data_with_caching(cache_cli=cache_cli, poke_cli=poke_cli, pokemon_id=str(pokemon_id))
     logger.info(f"{pokemon_data=}")
 
     return Response(

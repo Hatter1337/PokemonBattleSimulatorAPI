@@ -45,7 +45,7 @@ class BattleModel(Model):
     """
 
     class Meta:
-        table_name = "battle"
+        table_name = "ede-demo-battle"
 
     # Table attributes
     id = UnicodeAttribute(hash_key=True)

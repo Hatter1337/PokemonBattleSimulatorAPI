@@ -1,3 +1,4 @@
+setuptools==72.1.0
 # Pythonic interface for Amazon's DynamoDB tables
 pynamodb~=6.0.0
 # Client for Redis cluster
