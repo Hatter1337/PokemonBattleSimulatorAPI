@@ -68,3 +68,5 @@ Resources:
         WriteCapacityUnits: 2
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE

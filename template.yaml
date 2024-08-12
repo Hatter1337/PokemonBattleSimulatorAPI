@@ -40,7 +40,7 @@ Resources:
   PowertoolsLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: powertools-lambda-layer
+      LayerName: "ede-demo-powertools-lambda-layer"
       Description: "Lambda Layer with Powertools developer toolkit"
       ContentUri: src/layers/powertools_layer/
       CompatibleRuntimes:
@@ -52,7 +52,7 @@ Resources:
   DataLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: data-lambda-layer
+      LayerName: "ede-demo-data-lambda-layer"
       Description: "Lambda Layer provides utils for data processing & caching solution"
       ContentUri: src/layers/data_layer/
       CompatibleRuntimes:
@@ -83,7 +83,7 @@ Resources:
   PokemonBattleSimulatorApi:
     Type: AWS::Serverless::Api
     Properties:
-      Name: !Sub "Pokemon-Battle-Simulator-API-${Env}"
+      Name: !Sub "ede-demo-pokemon-battle-simulator-api-${Env}"
       StageName: !If [IsProductionEnv, "api", !Sub "${Env}-api"]
       Cors:
         AllowMethods: "'*'"
@@ -105,11 +105,45 @@ Resources:
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
+  # --------------------------------------------------------------------- S3 Bucket(s)
+  PokemonS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "ede-demo-pokemon-${AWS::AccountId}-bucket"
+
+  AllowS3ToCallLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref PokemonS3TriggerLambdaFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt PokemonS3Bucket.Arn
+
+  # --------------------------------------------------------------------- SQS Queue(s)
+  PokemonDLFifoQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "ede-demo-pokemon-dl-queue-${Env}.fifo"
+      FifoQueue: true
+      MessageRetentionPeriod: 1209600 # (14 days) Time messages are kept in queue before deletion
+
+  PokemonFifoQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "ede-demo-pokemon-queue-${Env}.fifo"
+      FifoQueue: true
+      ContentBasedDeduplication: true
+      MessageRetentionPeriod: 86400 # (24 hours) Time messages are kept in queue before deletion
+      VisibilityTimeout: 15 # (15 seconds) Time message is invisible in the queue after retrieval
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt PokemonDLFifoQueue.Arn
+        maxReceiveCount: 3 # Number of retries before moving a message to DLQueue
+
   # --------------------------------------------------------------------- Lambda Role(s)
   BaseLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "base-lambda-execution-role-${Env}"
+      RoleName: !Sub "ede-demo-base-lambda-execution-role-${Env}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -121,7 +155,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: LambdaS3DynamoDBCloudWatchPolicy
+        - PolicyName: !Sub "ede-demo-base-lambda-execution-policy-${Env}"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -133,12 +167,22 @@ Resources:
                   - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ede-demo-pokemon"
                   - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ede-demo-battle"
                   - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ede-demo-battle/index/*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ede-demo-battle/stream/*"
+              # SQS Queues for Pokemon Battle Simulator
+              - Effect: Allow
+                Action:
+                  - "sqs:SendMessage"
+                  - "sqs:GetQueueAttributes"
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                Resource:
+                  - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:ede-demo-pokemon-queue-${Env}.fifo"
 
-  # --------------------------------------------------------------------- Lambda functions
+  # --------------------------------------------------------------------- Lambda functions - API Handlers
   PokemonMirrorApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "pokemon-mirror-api-fn-${Env}"
+      FunctionName: !Sub "ede-demo-pokemon-mirror-api-fn-${Env}"
       CodeUri: src/lambda/functions/api_mirror/
       Handler: handler.lambda_handler
       Role: !GetAtt BaseLambdaExecutionRole.Arn
@@ -155,23 +199,20 @@ Resources:
   PokemonMirrorApiFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/pokemon-mirror-api-fn-${Env}"
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-mirror-api-fn-${Env}"
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
   PokemonDataFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "pokemon-battle-simulator-pokemon-data-fn-${Env}"
+      FunctionName: !Sub "ede-demo-pokemon-data-fn-${Env}"
       CodeUri: src/lambda/functions/api_pokemon/
       Handler: handler.lambda_handler
       Role: !GetAtt BaseLambdaExecutionRole.Arn
       Layers:
         - !Ref PowertoolsLayer
         - !Ref DataLayer
-      # AutoPublishAlias: live
-      # ProvisionedConcurrencyConfig:
-      #   ProvisionedConcurrentExecutions: !If [IsProductionEnv, 3, 1]
       Events:
         FetchPokemonData:
           Type: Api
@@ -185,14 +226,14 @@ Resources:
   PokemonDataFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/pokemon-battle-simulator-pokemon-data-fn-${Env}"
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-data-fn-${Env}"
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
-  BattleDataFunction:
+  PokemonBattleSimulatorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "pokemon-battle-simulator-battle-data-fn-${Env}"
+      FunctionName: !Sub "ede-demo-pokemon-battle-simulator-fn-${Env}"
       CodeUri: src/lambda/functions/api_battle
       Handler: handler.lambda_handler
       Role: !GetAtt BaseLambdaExecutionRole.Arn
@@ -228,12 +269,90 @@ Resources:
             Auth:
               ApiKeyRequired: true
 
-  BattleDataFunctionLogGroup:
+  PokemonBattleSimulatorFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/pokemon-battle-simulator-battle-data-fn-${Env}"
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-battle-simulator-fn-${Env}"
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
+
+  # --------------------------------------------------------------------- Lambda functions - S3 Event Handlers
+  PokemonS3TriggerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-pokemon-s3-trigger-fn-${Env}"
+      CodeUri: src/lambda/functions/s3_trigger/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref PokemonS3Bucket
+      Events:
+        S3PutObject:
+          Type: S3
+          Properties:
+            Bucket: !Ref PokemonS3Bucket
+            Events: s3:ObjectCreated:*
+
+  PokemonS3TriggerLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-s3-trigger-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
+
+  # ----------------------------------------------------------------- Lambda functions - DynamoDB Stream Event Handlers
+  PokemonDynamoDBTriggerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-pokemon-dynamodb-trigger-fn-${Env}"
+      CodeUri: src/lambda/functions/dynamodb_trigger/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref PokemonS3Bucket
+      Events:
+        DynamoDBTrigger:
+          Type: DynamoDB
+          Properties:
+            Stream: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ede-demo-battle/stream/2024-08-12T20:35:30.567"
+            BatchSize: 100
+            StartingPosition: LATEST
+
+  PokemonDynamoDBTriggerLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-dynamodb-trigger-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [ EnvironmentSettings, !Ref Env, LogRetentionInDays ]
+
+  # ----------------------------------------------------------------------------- Lambda functions - SQS Event Handlers
+  PokemonSQSTriggerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-pokemon-sqs-trigger-fn-${Env}"
+      CodeUri: src/lambda/functions/sqs_trigger/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/ede-demo-pokemon-queue-${Env}.fifo"
+      Events:
+        SQSQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt PokemonFifoQueue.Arn
+            Enabled: true
+            BatchSize: 1
+
+  PokemonSQSTriggerLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-sqs-trigger-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [ EnvironmentSettings, !Ref Env, LogRetentionInDays ]
+
 
 Outputs:
   PokemonBattleSimulatorApiUrlOutput:
