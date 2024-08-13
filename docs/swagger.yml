@@ -1,11 +1,10 @@
 openapi: 3.0.1
 info:
-  title: PokémonBattleSimulator API
+  title: Pokémon Battle Simulator API
   version: 0.0.1
 
 servers:
-  - url: https://nlwyvfbdsj.execute-api.us-east-2.amazonaws.com/prod/api/v1
-    description: Prod API
+  - url: https://{uuid}.execute-api.{region}.amazonaws.com/api
 
 tags:
   - name: Pokémon
