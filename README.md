@@ -18,13 +18,13 @@ This project demonstrates serverless architecture, offering scalable and cost-ef
 - First of all, you need to have an AWS account and AWS CLI installed on your machine.
 - Clone this repository and navigate to the root directory.
 - Rename S3 bucket in the `/src/resources/s3.yaml` and `samconfig.toml` (lines: 18, 30), because S3 Bucket names must be unique.
-- Create AWS resources from /src/resources directory using AWS CLI and CloudFormation (details in src/resources/README.md).
-- Deploy Serverless application using SAM CLI:
+- Create AWS resources from `/src/resources` directory using AWS CLI and CloudFormation (details in `src/resources/README.md`).
+- Deploy Serverless application using **SAM CLI**:
 ```bash
 $ sam build
 $ sam deploy --config-env dev --profile {your-aws-profile}
 ```
-- Or run locally using SAM CLI:
+- Or run locally using **SAM CLI**:
 ```bash
 $ sam build
 $ sam local start-api
