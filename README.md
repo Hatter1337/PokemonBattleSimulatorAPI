@@ -13,3 +13,19 @@ Leveraging data from **[PokéAPI](https://pokeapi.co/)**, it calculates battle o
 This project demonstrates serverless architecture, offering scalable and cost-effective solutions for real-time Pokémon battle simulations.
 
 **Note:** `swagger.yml` and Postman collection are located in the `/doc` directory.
+
+## Deploy to your AWS account
+- First of all, you need to have an AWS account and AWS CLI installed on your machine.
+- Clone this repository and navigate to the root directory.
+- Rename S3 bucket in the `/src/resources/s3.yaml` and `samconfig.toml` (lines: 18, 30), because S3 Bucket names must be unique.
+- Create AWS resources from /src/resources directory using AWS CLI and CloudFormation (details in src/resources/README.md).
+- Deploy Serverless application using SAM CLI:
+```bash
+$ sam build
+$ sam deploy --config-env dev --profile {your-aws-profile}
+```
+- Or run locally using SAM CLI:
+```bash
+$ sam build
+$ sam local start-api
+```

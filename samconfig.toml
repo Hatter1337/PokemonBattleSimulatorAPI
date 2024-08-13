@@ -11,11 +11,11 @@ parameter_overrides = [
 
 # Deploy to Development environment:
 #   - $ sam build
-#   - $ sam deploy --config-env dev
+#   - $ sam deploy --config-env dev --profile {your-aws-profile}
 [dev.deploy.parameters]
 stack_name = "ede-demo-pokemon-api-dev"
 region = "eu-central-1"
-s3_bucket = "pokemon-battle-similator-sam-deploy"
+s3_bucket = "pokemon-battle-simulator-sam-deploy-s3-bucket"  # TODO: Replace with your S3 bucket name
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
     "Env=dev",
@@ -23,11 +23,11 @@ parameter_overrides = [
 
 # Deploy to Production environment:
 #   - $ sam build
-#   - $ sam deploy --config-env prod
+#   - $ sam deploy --config-env prod --profile {your-aws-profile}
 [prod.deploy.parameters]
 stack_name = "ede-demo-pokemon-api-prod"
 region = "eu-central-1"
-s3_bucket = "pokemon-battle-similator-sam-deploy"
+s3_bucket = "pokemon-battle-simulator-sam-deploy-s3-bucket"  # TODO: Replace with your S3 bucket name
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
 parameter_overrides = [
     "Env=prod",

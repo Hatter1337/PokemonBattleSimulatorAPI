@@ -1,0 +1,5 @@
+# Layers requirements
+-r ./src/layers/data_layer/requirements.txt
+-r ./src/layers/powertools_layer/requirements.txt
+# Other requirements
+boto3~=1.34.159

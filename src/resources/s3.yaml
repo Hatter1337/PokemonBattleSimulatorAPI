@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  SAM Template for S3 Bucket
+
+Resources:
+  # ---------------------------------------------------------------------- S3 Buckets
+  SamS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: "pokemon-battle-simulator-sam-deploy-s3-bucket"  # TODO: Replace with your S3 bucket name
+      LifecycleConfiguration:
+        # Rule to delete outdated deployment files after 90 days
+        Rules:
+          - Id: DeleteOldFiles
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpirationInDays: 90
