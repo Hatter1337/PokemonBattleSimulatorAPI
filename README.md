@@ -27,8 +27,8 @@ This project demonstrates serverless architecture, offering scalable and cost-ef
   - `/resources` - AWS resources configuration with CloudFormation
   - `template.yaml` - SAM template file with API resources: API Gateway, Lambda functions, etc.
   - `samconfig.toml` - SAM configuration file with environment variables and parameters
-  - `docker-compose.yaml` - Docker Compose configuration for local development
-  - `run-local-api.sh` - Script to run SAM application locally in Docker
+  - `docker-compose.yaml` - (optional) Docker Compose configuration for local development
+  - `run-local-api.sh` - (optional) Script to run SAM application locally in Docker
 
 ## Deploy to your AWS account
 - First of all, you need to have an AWS account and AWS CLI installed on your machine.
@@ -50,7 +50,7 @@ $ sam build
 $ sam local start-api --port 8000 --profile {your-aws-profile}
 ```
 
-You also can use Dokcer Compose to run the application locally:
+You also can use **Dokcer Compose** to run the application locally:
 - Change the AWS profile name in `run-local-api.sh`.
 - Grant execution rights to the script: `$ chmod +x run-local-api.sh`
 - `$ docker-compose up`
