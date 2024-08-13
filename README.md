@@ -14,6 +14,22 @@ This project demonstrates serverless architecture, offering scalable and cost-ef
 
 **Note:** `swagger.yml` and Postman collection are located in the `/doc` directory.
 
+## Project structure
+- `/docs` - API documentation with swagger file
+- `/src` - Source code
+  - `/lambda` - Code base related to Lambda functions
+    - `/functions` - Lambda functions
+      - `/{name}` - Specific Lambda function with `handler.py` 
+    - `/tests` - Unit tests for all Lambda functions
+  - `/layers` - Code base related to Lambda layers
+    - `/{name}_layer` - Lambda layer with `requirements.txt` and common code 
+    - `/tests` - Unit tests for all Lambda layers
+  - `/resources` - AWS resources configuration with CloudFormation
+  - `template.yaml` - SAM template file with API resources: API Gateway, Lambda functions, etc.
+  - `samconfig.toml` - SAM configuration file with environment variables and parameters
+  - `docker-compose.yaml` - Docker Compose configuration for local development
+  - `run-local-api.sh` - Script to run SAM application locally in Docker
+
 ## Deploy to your AWS account
 - First of all, you need to have an AWS account and AWS CLI installed on your machine.
 - Clone this repository and navigate to the root directory.
@@ -24,8 +40,17 @@ This project demonstrates serverless architecture, offering scalable and cost-ef
 $ sam build
 $ sam deploy --config-env dev --profile {your-aws-profile}
 ```
-- Or run locally using **SAM CLI**:
+
+## Run locally using **SAM**:
+- Configure your AWS CLI with the necessary credentials, for your AWS profile, before running SAM commands.
+- Ensure Docker is running for `sam local start-api` to simulate the Lambda environment.
+- Run the following commands to build and start the API locally:
 ```bash
 $ sam build
-$ sam local start-api
+$ sam local start-api --port 8000 --profile {your-aws-profile}
 ```
+
+You also can use Dokcer Compose to run the application locally:
+- Change the AWS profile name in `run-local-api.sh`.
+- Grant execution rights to the script: `$ chmod +x run-local-api.sh`
+- `$ docker-compose up`
