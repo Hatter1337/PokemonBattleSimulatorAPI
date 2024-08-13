@@ -42,12 +42,14 @@ $ sam deploy --config-env dev --profile {your-aws-profile}
 ```
 
 ## Run locally using **SAM**:
+**Documentation:** [link](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli-local-start-api.html).
+
 - Configure your AWS CLI with the necessary credentials, for your AWS profile, before running SAM commands.
-- Ensure Docker is running for `sam local start-api` to simulate the Lambda environment.
+- Ensure **Docker** is running to simulate the Lambda environment.
 - Run the following commands to build and start the API locally:
 ```bash
 $ sam build
-$ sam local start-api --port 8000 --profile {your-aws-profile}
+$ sam local start-api --port 3000 --warm-containers eager --profile {your-aws-profile}
 ```
 
 You also can use **Dokcer Compose** to run the application locally:

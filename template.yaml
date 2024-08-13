@@ -179,6 +179,7 @@ Resources:
                   - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:ede-demo-pokemon-queue-${Env}.fifo"
 
   # --------------------------------------------------------------------- Lambda functions - API Handlers
+  # -------------------------------------------------- /api_mirror
   PokemonMirrorApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -203,6 +204,7 @@ Resources:
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
+  # -------------------------------------------------- /api_pokemon
   PokemonDataFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -230,6 +232,7 @@ Resources:
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
+  # -------------------------------------------------- /api_battle
   PokemonBattleSimulatorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -273,6 +276,29 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-battle-simulator-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
+
+  # -------------------------------------------------- /api_health_check
+  HealthCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-health-check-fn-${Env}"
+      CodeUri: src/lambda/functions/api_health_check/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Events:
+        FetchPokemonData:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /v1/health_check
+            Method: GET
+
+  HealthCheckFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-health-check-fn-${Env}"
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
