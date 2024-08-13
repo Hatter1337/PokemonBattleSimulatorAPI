@@ -301,6 +301,33 @@ Resources:
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
+  # ------------------------------------------------------------------- Lambda functions - EventBridge Scheduler (cron)
+  PokemonCronTriggerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-pokemon-cron-trigger-fn-${Env}"
+      CodeUri: src/lambda/functions/cron_trigger/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref PokemonS3Bucket
+      Events:
+        EachDayAtMidnight:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: cron(0 0 * * ? *)
+            ScheduleExpressionTimezone: UTC
+          RetryPolicy:
+            MaximumRetryAttempts: 3
+
+  PokemonCronTriggerLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-pokemon-cron-trigger-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
+
   # ----------------------------------------------------------------- Lambda functions - DynamoDB Stream Event Handlers
   PokemonDynamoDBTriggerLambdaFunction:
     Type: AWS::Serverless::Function
