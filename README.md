@@ -55,4 +55,19 @@ $ sam local start-api --port 3000 --warm-containers eager --profile {your-aws-pr
 You also can use **Dokcer Compose** to run the application locally:
 - Change the AWS profile name in `run-local-api.sh`.
 - Grant execution rights to the script: `$ chmod +x run-local-api.sh`
-- `$ docker-compose up`
+- Run it: `$ docker-compose up`
+
+## Problems with access to the Pokemon API
+If you have problems with access to the original Pokemon API: https://pokeapi.co/api/v2/pokemon/.
+
+You need to deploy SAM application, this will create mirror URL in your AWS account.
+
+After this use your API URL (you will see the URL of your API after running the `sam deploy` command)
+
+<img src="docs/static/SAMOutput.png" width="400">
+
+to set the mirror URL in the `src/lambda/functions/api_pokemon/handler.py` file, line 20:
+```python
+poke_cli.mirror_url = "{your-api-url}mirror/pokemon/"
+# example: "https://uuid.execute-api.eu-central-1.amazonaws.com/dev-api/mirror/pokemon/"
+```
