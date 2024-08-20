@@ -97,6 +97,19 @@ Resources:
           Quota:
             Limit: 1000
             Period: DAY
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: "Pokemon Battle Simulator API"
+          version: "1.0"
+        paths:
+          /swagger:
+            get:
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwaggerExampleFunction.Arn}/invocations
+                httpMethod: GET
+                type: aws_proxy
 
   PokemonBattleSimulatorApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -311,7 +324,7 @@ Resources:
       Handler: handler.lambda_handler
       Role: !GetAtt BaseLambdaExecutionRole.Arn
       Events:
-        FetchPokemonData:
+        GetTodo:
           Type: Api
           Properties:
             RestApiId: !Ref PokemonBattleSimulatorApi

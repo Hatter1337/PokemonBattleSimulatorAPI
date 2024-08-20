@@ -1,29 +1,37 @@
-import requests
-
-from aws_lambda_powertools.event_handler import APIGatewayRestResolver
+from aws_lambda_powertools.event_handler.openapi.params import Body
+from aws_lambda_powertools.shared.types import Annotated
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from aws_lambda_powertools.event_handler import APIGatewayRestResolver
+from aws_lambda_powertools.logging import Logger
 
+from models import CreateOrderRequest, CreateOrderOutput, InternalServerErrorOutput
+
+logger = Logger()
 app = APIGatewayRestResolver(enable_validation=True)
+app.enable_swagger(path="/swagger", title="AWS Lambda Handler Cookbook - Orders Service")
 
 
-@app.get(
-    "/v1/todos/<todo_id>",
-    summary="Retrieves a todo item",
-    description="Loads a todo item identified by the `todo_id`",
-    response_description="The todo object",
+@app.post(
+    "/api/orders/",
+    summary="Create an order",
+    description="Create an order identified by the body payload",
+    response_description="The created order",
     responses={
-        200: {"description": "Todo item found"},
-        404: {
-            "description": "Item not found",
+        200: {
+            "description": "The created order",
+            "content": {"application/json": {"model": CreateOrderOutput}},
+        },
+        501: {
+            "description": "Internal server error",
+            "content": {"application/json": {"model": InternalServerErrorOutput}},
         },
     },
-    tags=["Todos"],
+    tags=["CRUD"],
 )
-def get_todo_title(todo_id: int) -> str:
-    todo = requests.get(f"https://jsonplaceholder.typicode.com/todos/{todo_id}", verify=False)
-    todo.raise_for_status()
-
-    return todo.json()["title"]
+def handle_create_order(
+    create_input: Annotated[CreateOrderRequest, Body(embed=False, media_type="application/json")]
+) -> CreateOrderOutput:
+    return CreateOrderOutput(name="test", item_count=100, id=1)
 
 
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
