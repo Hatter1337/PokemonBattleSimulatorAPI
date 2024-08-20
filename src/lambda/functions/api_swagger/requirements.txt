@@ -1,0 +1,5 @@
+# Powertools itself with dependencies for data validation (Pydantic)
+aws-lambda-powertools~=2.43.0
+pydantic~=2.8.2
+# Requests library for making HTTP requests
+requests~=2.32.3

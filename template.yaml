@@ -302,6 +302,29 @@ Resources:
       RetentionInDays:
         !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
 
+  # -------------------------------------------------- /api_swagger
+  SwaggerExampleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ede-demo-swagger-example-fn-${Env}"
+      CodeUri: src/lambda/functions/api_swagger/
+      Handler: handler.lambda_handler
+      Role: !GetAtt BaseLambdaExecutionRole.Arn
+      Events:
+        FetchPokemonData:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PokemonBattleSimulatorApi
+            Path: /v1/todos/{todo_id}
+            Method: GET
+
+  SwaggerExampleFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ede-demo-swagger-example-fn-${Env}"
+      RetentionInDays:
+        !FindInMap [EnvironmentSettings, !Ref Env, LogRetentionInDays]
+
   # --------------------------------------------------------------------- Lambda functions - S3 Event Handlers
   PokemonS3TriggerLambdaFunction:
     Type: AWS::Serverless::Function
